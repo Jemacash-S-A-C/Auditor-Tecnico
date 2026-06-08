@@ -11,23 +11,20 @@ DOWNLOADS_DIR="$HOME/Downloads"
 # ── Notificaciones (osascript nativo, sin dependencias) ───────────────────────
 
 notify_success() {
-  osascript << 'AS'
-display dialog "Auditoría completada exitosamente." & return & return & \
-  "Su dispositivo ha sido verificado y los datos enviados a Jemacash. Puede continuar con el registro de su garantía en la plataforma." \
-  with title "Jemacash Auditor" buttons {"OK"} default button "OK" with icon note
-AS
-  true
+  osascript \
+    -e 'set msg to "Auditoría completada exitosamente." & return & return & "Su dispositivo ha sido verificado y los datos enviados a Jemacash. Puede continuar con el registro de su garantía en la plataforma."' \
+    -e 'display dialog msg with title "Jemacash Auditor" buttons {"OK"} default button "OK" with icon note' \
+    2>/dev/null || true
 }
 
 notify_error() {
-  osascript - "$1" << 'AS'
-on run argv
-  display dialog "Error al completar la auditoría: " & (item 1 of argv) & return & return & \
-    "Intente ejecutar el auditor nuevamente. Si el problema persiste, contacte a soporte de Jemacash." \
-    with title "Jemacash Auditor - Error" buttons {"OK"} default button "OK" with icon stop
-end run
-AS
-  true
+  local safe_msg
+  safe_msg=$(printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g')
+  osascript \
+    -e "set errMsg to \"${safe_msg}\"" \
+    -e 'set full to "Error al completar la auditoría: " & errMsg & return & return & "Intente ejecutar el auditor nuevamente. Si el problema persiste, contacte a soporte de Jemacash."' \
+    -e 'display dialog full with title "Jemacash Auditor - Error" buttons {"OK"} default button "OK" with icon stop' \
+    2>/dev/null || true
 }
 
 # ── Autoeliminación ───────────────────────────────────────────────────────────
